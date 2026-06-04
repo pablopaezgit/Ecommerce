@@ -1,6 +1,7 @@
-// Api/Controllers/CategoryController.cs
+using ECommerce.Application.Commands.Category;
 using ECommerce.Application.DTOs;
-using ECommerce.Application.Services;
+using ECommerce.Application.Queries.Category;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,30 +11,27 @@ namespace Ecommerce.Api.Controllers;
 [Route("api/[controller]")]
 public class CategoryController : ControllerBase
 {
-    private readonly ICategoryService _service;
+    private readonly IMediator _mediator;
 
-    public CategoryController(ICategoryService service) => _service = service;
+    public CategoryController(IMediator mediator) => _mediator = mediator;
 
-    // GET api/category — público
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
-        => Ok(await _service.GetAllAsync(ct));
+        => Ok(await _mediator.Send(new GetAllCategoriesQuery(), ct));
 
-    // POST api/category — solo admins
     [HttpPost]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto, CancellationToken ct)
+    [Authorize]
+    public async Task<IActionResult> Create(CreateCategoryDto dto, CancellationToken ct)
     {
-        var created = await _service.CreateAsync(dto, ct);
+        var created = await _mediator.Send(new CreateCategoryCommand(dto.Name, dto.Description), ct);
         return Created(string.Empty, created);
     }
 
-    // DELETE api/category/{id} — solo admins
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        await _service.DeleteAsync(id, ct);
+        await _mediator.Send(new DeleteCategoryCommand(id), ct);
         return NoContent();
     }
 }

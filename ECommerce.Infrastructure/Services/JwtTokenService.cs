@@ -1,13 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ECommerce.Application.Contracts;
 using ECommerce.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ECommerce.Infrastructure.Services;
 
-public class JwtTokenService
+public class JwtTokenService : ITokenService
 {
     private readonly string _secret;
     private readonly string _issuer;
@@ -16,7 +17,6 @@ public class JwtTokenService
 
     public JwtTokenService(IConfiguration config)
     {
-        // Estos valores vienen del appsettings.json (sección "Jwt")
         _secret            = config["Jwt:Secret"]           ?? throw new InvalidOperationException("Jwt:Secret no configurado.");
         _issuer            = config["Jwt:Issuer"]           ?? "ECommerceApi";
         _audience          = config["Jwt:Audience"]         ?? "ECommerceClient";
@@ -28,7 +28,6 @@ public class JwtTokenService
         var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // Los claims son los datos que viajan dentro del token
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub,   user.Id.ToString()),

@@ -1,4 +1,5 @@
 using System.Text;
+using ECommerce.Application.Contracts;
 using ECommerce.Application.Contracts.Persistence;
 using ECommerce.Domain.Interfaces;
 using ECommerce.Infrastructure.Persistence;
@@ -22,8 +23,6 @@ public static class InfrastructureServiceExtensions
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(configuration.GetConnectionString("DefaultConnection")));
 
-        // ApplicationDbContext implementa IUnitOfWork, así que registramos
-        // IUnitOfWork resolviendo la misma instancia que ya existe en el scope
         services.AddScoped<IUnitOfWork>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
 
@@ -33,9 +32,10 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IUserRepository,     UserRepository>();
         services.AddScoped<IOrderRepository,    OrderRepository>();
 
-        // ── JWT ────────────────────────────────────────────────────────
-        services.AddScoped<JwtTokenService>();
+        // ── Token Service ──────────────────────────────────────────────
+        services.AddScoped<ITokenService, JwtTokenService>();
 
+        // ── JWT Auth ───────────────────────────────────────────────────
         var jwtSecret = configuration["Jwt:Secret"]
             ?? throw new InvalidOperationException("Jwt:Secret no configurado.");
 

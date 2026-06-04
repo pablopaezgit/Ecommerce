@@ -1,6 +1,7 @@
-// Api/Controllers/OrderController.cs
+using ECommerce.Application.Commands.Order;
 using ECommerce.Application.DTOs;
-using ECommerce.Application.Services;
+using ECommerce.Application.Queries.Order;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,28 +9,26 @@ namespace Ecommerce.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // todas las rutas de orders requieren estar autenticado
+[Authorize]
 public class OrderController : ControllerBase
 {
-    private readonly IOrderService _service;
+    private readonly IMediator _mediator;
 
-    public OrderController(IOrderService service) => _service = service;
+    public OrderController(IMediator mediator) => _mediator = mediator;
 
-    // GET api/order/{id}
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
-        => Ok(await _service.GetByIdAsync(id, ct));
+        => Ok(await _mediator.Send(new GetOrderByIdQuery(id), ct));
 
-    // GET api/order/user/{userId}
     [HttpGet("user/{userId:guid}")]
     public async Task<IActionResult> GetByUser(Guid userId, CancellationToken ct)
-        => Ok(await _service.GetByUserIdAsync(userId, ct));
+        => Ok(await _mediator.Send(new GetOrdersByUserQuery(userId), ct));
 
-    // POST api/order
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateOrderDto dto, CancellationToken ct)
+    public async Task<IActionResult> Create(CreateOrderDto dto, CancellationToken ct)
     {
-        var created = await _service.CreateAsync(dto, ct);
+        var cmd     = new CreateOrderCommand(dto.UserId, dto.Items);
+        var created = await _mediator.Send(cmd, ct);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 }

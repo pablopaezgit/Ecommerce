@@ -1,6 +1,7 @@
-// Api/Controllers/ProductController.cs
+using ECommerce.Application.Commands.Product;
 using ECommerce.Application.DTOs;
-using ECommerce.Application.Services;
+using ECommerce.Application.Queries.Product;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,44 +11,40 @@ namespace Ecommerce.Api.Controllers;
 [Route("api/[controller]")]
 public class ProductController : ControllerBase
 {
-    private readonly IProductService _service;
+    private readonly IMediator _mediator;
 
-    public ProductController(IProductService service) => _service = service;
+    public ProductController(IMediator mediator) => _mediator = mediator;
 
-    // GET api/product — público, cualquiera puede ver productos
     [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken ct)
-        => Ok(await _service.GetAllAsync(ct));
+        => Ok(await _mediator.Send(new GetAllProductsQuery(), ct));
 
-    // GET api/product/{id}
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
-        => Ok(await _service.GetByIdAsync(id, ct));
+        => Ok(await _mediator.Send(new GetProductByIdQuery(id), ct));
 
-    // POST api/product — solo admins
     [HttpPost]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromBody] CreateProductDto dto, CancellationToken ct)
+    [Authorize]
+    public async Task<IActionResult> Create(CreateProductDto dto, CancellationToken ct)
     {
-        var created = await _service.CreateAsync(dto, ct);
+        var cmd     = new CreateProductCommand(dto.Name, dto.Description, dto.Price, dto.Stock, dto.CategoryId);
+        var created = await _mediator.Send(cmd, ct);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
-    // PUT api/product/{id} — solo admins
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto dto, CancellationToken ct)
+    [Authorize]
+    public async Task<IActionResult> Update(Guid id, UpdateProductDto dto, CancellationToken ct)
     {
-        await _service.UpdateAsync(id, dto, ct);
+        await _mediator.Send(new UpdateProductCommand(id, dto.Name, dto.Description, dto.Price, dto.Stock), ct);
         return NoContent();
     }
 
-    // DELETE api/product/{id} — solo admins
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        await _service.DeleteAsync(id, ct);
+        await _mediator.Send(new DeleteProductCommand(id), ct);
         return NoContent();
     }
 }
