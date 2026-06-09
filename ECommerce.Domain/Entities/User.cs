@@ -14,19 +14,14 @@ public class User
 
     public DateTime CreatedAt { get; private set; }
 
-    private User()
-    {
-    }
+    private User() { }
 
-    public User(
-        string email,
-        string name,
-        string passwordHash)
+    public User(string email, string name, string passwordHash)
     {
-        Id = Guid.NewGuid();
-        Email = email;
-        Name = name;
+        Id           = Guid.NewGuid();
+        Email        = email;
+        Name         = name;
         PasswordHash = passwordHash;
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt    = DateTime.UtcNow;
     }
 }

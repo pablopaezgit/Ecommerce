@@ -1,6 +1,6 @@
+using ECommerce.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using ECommerce.Domain.Entities;
 
 namespace ECommerce.Infrastructure.Persistence.Configurations;
 

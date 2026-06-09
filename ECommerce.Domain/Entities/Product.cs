@@ -16,12 +16,8 @@ public class Product
 
     public DateTime CreatedAt { get; private set; }
 
-    // Constructor vacío para EF Core
-    private Product()
-    {
-    }
+    private Product() { }
 
-    // Constructor de negocio
     public Product(
         string name,
         string description,
@@ -38,13 +34,13 @@ public class Product
         if (stock < 0)
             throw new ArgumentException("El stock no puede ser negativo");
 
-        Id = Guid.NewGuid();
-        Name = name;
+        Id          = Guid.NewGuid();
+        Name        = name;
         Description = description;
-        Price = price;
-        Stock = stock;
-        CategoryId = categoryId;
-        CreatedAt = DateTime.UtcNow;
+        Price       = price;
+        Stock       = stock;
+        CategoryId  = categoryId;
+        CreatedAt   = DateTime.UtcNow;
     }
 
     public void UpdatePrice(decimal newPrice)

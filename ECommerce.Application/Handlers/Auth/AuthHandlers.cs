@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using ECommerce.Application.Commands.Auth;
 using ECommerce.Application.Contracts;
 using ECommerce.Application.Contracts.Persistence;
@@ -26,19 +24,13 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, UserResp
         if (await _users.ExistsByEmailAsync(cmd.Email, ct))
             throw new BusinessRuleException($"El email '{cmd.Email}' ya está registrado.");
 
-        var hash = Hash(cmd.Password);
+        var hash = BCrypt.Net.BCrypt.HashPassword(cmd.Password);
         var user = new Domain.Entities.User(cmd.Email, cmd.Name, hash);
 
         await _users.AddAsync(user, ct);
         await _uow.SaveChangesAsync(ct);
 
         return new UserResponseDto(user.Id, user.Name, user.Email, user.Role, user.CreatedAt);
-    }
-
-    private static string Hash(string password)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes);
     }
 }
 
@@ -58,16 +50,10 @@ public class LoginUserHandler : IRequestHandler<LoginUserCommand, AuthResponseDt
         var user = await _users.GetByEmailAsync(cmd.Email, ct)
             ?? throw new BusinessRuleException("Credenciales inválidas.");
 
-        if (user.PasswordHash != Hash(cmd.Password))
+        if (!BCrypt.Net.BCrypt.Verify(cmd.Password, user.PasswordHash))
             throw new BusinessRuleException("Credenciales inválidas.");
 
         var token = _tokenService.GenerateToken(user);
         return new AuthResponseDto(user.Id, user.Name, user.Email, token);
-    }
-
-    private static string Hash(string password)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToHexString(bytes);
     }
 }

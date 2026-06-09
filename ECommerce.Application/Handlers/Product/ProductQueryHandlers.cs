@@ -6,7 +6,6 @@ using MediatR;
 
 namespace ECommerce.Application.Handlers.Product;
 
-// ── GetAll ────────────────────────────────────────────────────────────────
 public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, IEnumerable<ProductResponseDto>>
 {
     private readonly IProductRepository _products;
@@ -22,7 +21,6 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, IEnume
     }
 }
 
-// ── GetById ───────────────────────────────────────────────────────────────
 public class GetProductByIdHandler : IRequestHandler<GetProductByIdQuery, ProductResponseDto>
 {
     private readonly IProductRepository _products;
