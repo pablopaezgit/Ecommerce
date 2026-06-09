@@ -19,7 +19,6 @@ obj/
 *.db-wal
 
 # Secrets y configuración local
-appsettings.Development.json
 appsettings.Local.json
 
 # NuGet
