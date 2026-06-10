@@ -110,7 +110,7 @@ HTTP Request
 *1.* Clonar el repositorio y abrir una terminal en la carpeta Ecommerce.Api:
 
 bash
-git clone <url-del-repo>
+git clone https://github.com/pablopaezgit/Ecommerce.git
 cd ECommerce-main/Ecommerce.Api
 
 
