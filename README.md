@@ -1,146 +1,129 @@
-# ECommerce Clean Architecture API
+# ECommerce — Clean Architecture API
 
-Backend de e-commerce desarrollado con ASP.NET Core 8 aplicando Clean Architecture, Entity Framework Core y principios de arquitectura escalable.
-
----
-
-# Tecnologías utilizadas
-
-- ASP.NET Core 8
-- C#
-- Entity Framework Core 8
-- SQLite
-- Swagger / OpenAPI
-- Git
-- GitHub
+Backend de e-commerce desarrollado con ASP.NET Core 8, aplicando Clean Architecture, CQRS con MediatR y Entity Framework Core.
 
 ---
 
-# Arquitectura utilizada
+## Tecnologías
 
-El proyecto sigue el patrón **Clean Architecture** separando responsabilidades en distintas capas:
+| Tecnología | Versión |
+|---|---|
+| ASP.NET Core | 8.0 |
+| Entity Framework Core | 8.0 |
+| MediatR | 14.x |
+| BCrypt.Net-Next | 4.x |
+| SQLite | — |
+| Swagger / OpenAPI | — |
 
-```text
-ECommerce
-│
-├── ECommerce.Api
-├── ECommerce.Application
-├── ECommerce.Domain
-└── ECommerce.Infrastructure
+---
 
-Capas
-Api
+## Arquitectura
 
-Contiene:
+El proyecto sigue *Clean Architecture* con cuatro capas. Las dependencias apuntan siempre hacia adentro.
 
-Controllers
-configuración de Swagger
-endpoints HTTP
-configuración de la aplicación
-Application
 
-Contiene:
+ECommerce.Domain          ← Entidades, Value Objects, excepciones de dominio
+ECommerce.Application     ← Casos de uso, Commands, Queries, Handlers, DTOs
+ECommerce.Infrastructure  ← EF Core, repositorios, JWT, migraciones
+Ecommerce.Api             ← Controllers, Middleware, Program.cs
 
-interfaces
-contratos
-lógica de aplicación
-Domain
 
-Contiene:
+### Flujo HTTP
 
-entidades
-reglas de negocio
-lógica del dominio
-Infrastructure
 
-Contiene:
+HTTP Request
+    → GlobalExceptionHandler (atrapa errores)
+    → RequestLoggingMiddleware (loguea método, ruta y tiempo)
+    → AuthenticationMiddleware (valida JWT)
+    → Controller (recibe y delega)
+    → MediatR (enruta al Handler)
+    → Handler (orquesta la lógica)
+    → Domain (reglas de negocio)
+    → Repository → SQLite
+    ← HTTP Response (200 / 201 / 204 / 400 / 404)
 
-Entity Framework Core
-DbContext
-Repositories
-Migraciones
-acceso a datos
-Métodos y patrones utilizados
-Clean Architecture
 
-Separación de responsabilidades por capas para lograr:
+---
 
-mantenibilidad
-escalabilidad
-bajo acoplamiento
-Repository Pattern
+## Patrones implementados
 
-Se implementó el patrón Repository para abstraer el acceso a datos.
+*CQRS con MediatR* — Los controllers no tienen lógica de negocio. Solo crean un Command o Query y lo envían por _mediator.Send(). El Handler correspondiente resuelve la operación.
 
-Ejemplo:
+*Repository Pattern* — La capa Application define interfaces (IProductRepository, IUserRepository, etc.). Infrastructure las implementa con EF Core. Application nunca conoce EF Core.
 
-IProductRepository
-ProductRepository
-Dependency Injection
+*Unit of Work* — IUnitOfWork centraliza el SaveChangesAsync para garantizar que los cambios se persistan de forma atómica.
 
-Uso de inyección de dependencias nativa de ASP.NET Core mediante:
+*GlobalExceptionHandler* — Implementa IExceptionHandler de ASP.NET Core. Devuelve respuestas en formato ProblemDetails (RFC 7807) con mapeo de excepciones de dominio a códigos HTTP:
 
-builder.Services.AddInfrastructure(builder.Configuration);
-Entity Framework Core
+| Excepción | HTTP |
+|---|---|
+| NotFoundException | 404 |
+| BusinessRuleException | 400 |
+| DomainException | 422 |
+| Cualquier otra | 500 |
 
-Se utilizó EF Core para:
+---
 
-mapeo objeto-relacional
-consultas
-persistencia
-migraciones
-Fluent API
+## Seguridad
 
-Configuración avanzada de entidades mediante Fluent API:
+- Passwords hasheados con *BCrypt* (BCrypt.Net-Next)
+- Autenticación con *JWT Bearer*
 
-IEntityTypeConfiguration<T>
+---
 
-Permite:
+## Endpoints
 
-configurar relaciones
-índices
-restricciones
-tipos SQL
-Migraciones
+### Auth
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| POST | /api/Auth/register | No | Registrar usuario |
+| POST | /api/Auth/login | No | Login, devuelve JWT |
 
-Se utilizaron migraciones de EF Core para generar automáticamente la base de datos.
+### Products
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| GET | /api/Product | No | Listar productos |
+| GET | /api/Product/{id} | No | Obtener por ID |
+| POST | /api/Product | Sí | Crear producto |
+| PUT | /api/Product/{id} | Sí | Actualizar producto |
+| DELETE | /api/Product/{id} | Sí | Eliminar producto |
 
-Comandos utilizados:
+### Categories
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| GET | /api/Category | No | Listar categorías |
+| POST | /api/Category | Sí | Crear categoría |
+| DELETE | /api/Category/{id} | Sí | Eliminar categoría |
 
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-Swagger / OpenAPI
+### Orders
+| Método | Ruta | Auth | Descripción |
+|---|---|---|---|
+| POST | /api/Order | Sí | Crear orden |
+| GET | /api/Order/{id} | Sí | Obtener orden por ID |
 
-Documentación automática de endpoints REST mediante Swagger UI.
+---
 
-Funcionalidades implementadas
-Productos
-Obtener todos los productos
-Obtener producto por ID
-Crear producto
-Eliminar producto
-Base de datos
+## Cómo correr el proyecto
 
-Se utilizó SQLite como motor de base de datos.
+*Requisito:* .NET 8 SDK instalado.
 
-Archivo generado:
+*1.* Clonar el repositorio y abrir una terminal en la carpeta Ecommerce.Api:
 
-ecommerce.db
-Endpoints disponibles
-Product
-GET /api/Product
-GET /api/Product/{id}
-POST /api/Product
-DELETE /api/Product/{id}
-Ejecutar proyecto
-Restaurar paquetes
-dotnet restore
-Aplicar migraciones
-dotnet ef database update --project ECommerce.Infrastructure --startup-project ECommerce.Api
-Ejecutar API
-dotnet run --project ECommerce.Api
-Swagger
-https://localhost:xxxx/swagger
-Objetivo del proyecto
+bash
+git clone <url-del-repo>
+cd ECommerce-main/Ecommerce.Api
 
-Proyecto realizado con fines de aprendizaje y práctica profesional de desarrollo backend utilizando tecnologías modernas del ecosistema .NET.
+
+*2.* Ejecutar:
+
+bash
+dotnet run
+
+
+*3.* Abrir Swagger en el navegador:
+
+
+http://localhost:5174/swagger
+
+
+*4.* Registrar un usuario en POST /api/Auth/register, hacer login en POST /api/Auth/login, copiar el token y pegarlo en el botón *Authorize* con el formato Bearer <token>.
